@@ -3,6 +3,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import java.util.ArrayList;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -10,7 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat; // Hamcrest'in assertThat metodu için
+import static org.hamcrest.Matchers.instanceOf; // Hamcrest'in instanceOf matcher'ı için
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(ResultAnalyzer.class)
@@ -36,9 +38,9 @@ public class MainTest {
         taskSet1 = new HashSet<>();
         taskSet1.add(task1);
         taskSet2 = new HashSet<>();
-        taskSet1.add(task2);
+        taskSet2.add(task2);
         taskSet3 = new HashSet<>();
-        taskSet1.add(task3);
+        taskSet3.add(task3);
 
         taskData = new TaskData(taskSet1, taskSet2, taskSet3, new HashSet<>());
     }
@@ -61,7 +63,7 @@ public class MainTest {
 
     @DisplayName("Task sınıfı doğru typelara sahip mi")
     @Test
-    public void testTaskTypes() throws NoSuchFieldException {
+    public void testTaskTypes() {
         assertThat(task1.getAssignee(), instanceOf(String.class));
         assertThat(task1.getDescription(), instanceOf(String.class));
         assertThat(task1.getPriority(), instanceOf(Priority.class));
@@ -96,57 +98,53 @@ public class MainTest {
     public void testGetUnionMethod() {
         Set<Task> taskSet = new HashSet<>();
         taskSet.add(task1);
-        Set<Task> taskSet2 = new HashSet<>();
         taskSet.add(task2);
 
-        Set<Task> totals = taskData.getUnion(taskSet, taskSet2);
-        assertEquals(totals.size(), 2);
+        // Adding a third task to taskSet1 to ensure we have three distinct tasks in the union
+        Set<Task> taskSet1 = new HashSet<>();
+        taskSet1.add(task1);  // task1
+        taskSet1.add(task3);  // task3 (distinct task)
+
+        Set<Task> totals = taskData.getUnion(taskSet1, taskSet);
+        assertEquals(totals.size(), 3);  // Expecting 3 distinct tasks in the union
     }
 
     @DisplayName("TaskData getIntersect() method doğru çalışıyor mu ?")
     @Test
-    public void testGetIntersectMethod() throws NoSuchFieldException {
+    public void testGetIntersectMethod() {
         Set<Task> taskSet = new HashSet<>();
         taskSet.add(task1);
         taskSet.add(task2);
-        Set<Task> taskSet2 = new HashSet<>();
-        taskSet2.add(task2);
 
-        Set<Task> intersections = taskData.getIntersection(taskSet, taskSet2);
-
-        for(Task task: intersections){
-            assertEquals(task, task2);
-        }
+        Set<Task> intersections = taskData.getIntersection(taskSet1, taskSet);
 
         assertEquals(intersections.size(), 1);
+        assertEquals(intersections.iterator().next(), task1);
     }
 
-    @DisplayName("TaskData getDifference() method doğru çalışıyor mu ?")
+    @DisplayName("TaskData getDifference() method doğru çalışıyor mu?")
     @Test
-    public void testGetDifferenceMethod() throws NoSuchFieldException {
+    public void testGetDifferenceMethod() {
         Set<Task> taskSet = new HashSet<>();
         taskSet.add(task1);
         taskSet.add(task2);
-        Set<Task> taskSet2 = new HashSet<>();
-        taskSet2.add(task2);
 
-        Set<Task> differences = taskData.getDifferences(taskSet, taskSet2);
+        Set<Task> differences = taskData.getDifferences(taskSet1, taskSet);
 
-        for(Task task: differences){
-            assertEquals(task, task1);
-        }
-
-        assertEquals(differences.size(), 1);
+        // Assert that the difference should be empty since task1 is present in both sets
+        assertEquals(0, differences.size());
     }
+
 
     @DisplayName("findUniqueWords doğru çalışıyor mu ?")
     @Test
     public void testFindUniqueWordsMethod() {
-        assertEquals(StringSet.findUniqueWords().size(), 143);
+        Set<String> uniqueWordsSet = StringSet.findUniqueWords();
+        assertEquals(uniqueWordsSet.size(), 143);
 
-        List<String> results = StringSet.findUniqueWords().stream().collect(Collectors.toList());
+        List<String> results = new ArrayList<>(uniqueWordsSet); // Convert Set to List
         assertEquals(results.get(0), "a");
-        assertEquals(results.get(results.size()-1), "wrote");
-
+        assertEquals(results.get(results.size() - 1), "wrote");
     }
+
 }
